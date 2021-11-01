@@ -10,8 +10,6 @@ import java.time.Instant;
 @Data
 public class Cue {
     @Id
-    @GeneratedValue(strategy= GenerationType.TABLE)
-    private Integer id;
     private Double number;
     private Instant time;
 
