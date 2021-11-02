@@ -20,8 +20,8 @@ public class UDPServer
     {
         String data = new String((byte[]) message.getPayload());
         String[] eosStrinTx = data.split(" ");
-        if (eosStrinTx.length > 0 && eosStrinTx[0].equals("Cue")) {
-            Cue cue = new Cue(Double.parseDouble(eosStrinTx[2]), Instant.now());
+        if (eosStrinTx.length > 0 && eosStrinTx[1].equals("Cue") && Double.parseDouble(eosStrinTx[2]) == 1) {
+            Cue cue = new Cue(Double.parseDouble(eosStrinTx[3]), Instant.now());
             cueRepository.save(cue);
         }
         System.out.print(data);

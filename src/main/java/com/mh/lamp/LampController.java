@@ -2,6 +2,7 @@ package com.mh.lamp;
 
 import com.mh.lamp.cue.Cue;
 import com.mh.lamp.cue.CueRepository;
+import com.mh.lamp.recording.Recording;
 import com.mh.lamp.recording.RecordingRepository;
 import org.springframework.integration.ip.udp.UnicastSendingMessageHandler;
 import org.springframework.integration.support.MessageBuilder;
@@ -10,11 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
-
-import static java.time.LocalTime.now;
 
 @RestController
 public class LampController {
@@ -55,4 +52,17 @@ public class LampController {
         // Get recording to get the sync points
         recordingRepository.getById(recordingId);
     }
+
+    @GetMapping("createRecording")
+    public void createRecording(Recording recording)
+    {
+        recordingRepository.save(recording);
+    }
+
+    @GetMapping("getRecordings")
+    public List<Recording> getRecordings(String recordingName)
+    {
+        return recordingRepository.findAll();
+    }
+
 }

@@ -16,11 +16,14 @@ import java.util.Map;
 @NoArgsConstructor
 public class Recording {
     @Id
+    @GeneratedValue
     private Integer id;
+    private String name;
     private String videoUrl;
     @OneToMany
     @JoinColumn(name = "cue_id")
     private List<Cue> cueList;
 
-//    private List<SyncPoint> syncPoints;
+    @Embedded
+    private List<SyncPoint> syncPoints;
 }
