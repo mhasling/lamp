@@ -4,6 +4,9 @@ import com.mh.lamp.cue.Cue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.content.commons.annotations.ContentId;
+import org.springframework.content.commons.annotations.ContentLength;
+import org.springframework.content.commons.annotations.MimeType;
 
 import javax.persistence.*;
 import java.util.List;
@@ -19,11 +22,9 @@ public class Recording {
     @GeneratedValue
     private Integer id;
     private String name;
-    private String videoUrl;
+    private String videoTitle;
     @OneToMany
     @JoinColumn(name = "cue_id")
     private List<Cue> cueList;
 
-    @Embedded
-    private List<SyncPoint> syncPoints;
 }

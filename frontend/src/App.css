@@ -2,3 +2,7 @@ aside {
   width: 10%;
   float: right;
 }
+
+.clickable {
+    cursor : pointer
+}

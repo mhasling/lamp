@@ -1,5 +1,6 @@
 package com.mh.lamp;
 
+import com.mh.lamp.app.cue.AppRepository;
 import com.mh.lamp.cue.Cue;
 import com.mh.lamp.cue.CueRepository;
 import org.springframework.messaging.Message;
@@ -8,12 +9,14 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 
 @Service
-public class UDPServer
+public class ConsoleListener
 {
     private CueRepository cueRepository;
+    private AppRepository appRepository;
 
-    public UDPServer(CueRepository cueRepository) {
+    public ConsoleListener(CueRepository cueRepository, AppRepository appRepository) {
         this.cueRepository = cueRepository;
+        this.appRepository = appRepository;
     }
 
     public void handleMessage(Message message)
