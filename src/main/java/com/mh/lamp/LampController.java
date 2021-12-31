@@ -6,12 +6,7 @@ import com.mh.lamp.recording.Recording;
 import com.mh.lamp.recording.RecordingContentStore;
 import com.mh.lamp.recording.RecordingRepository;
 import com.mh.lamp.recording.StreamingService;
-import lombok.extern.log4j.Log4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.integration.ip.udp.UnicastSendingMessageHandler;
@@ -21,12 +16,13 @@ import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 @RestController
 public class LampController {
@@ -92,6 +88,30 @@ public class LampController {
         recordingRepository.save(recording);
     }
 
+    @PostMapping("syncCue")
+    public void syncCue(@RequestBody Cue cue,
+                              @RequestParam(name = "recordingId", required = false) Integer recordingId,
+                        @RequestParam(name = "videoTime") Integer videoTime)
+
+    {
+        Recording recording = recordingRepository.getById(recordingId != null ? recordingId : selectedRecordingId);
+        recording.getCueList().sort(Comparator.comparing(Cue::getNumber));
+        AtomicReference<Integer> syncTime = new AtomicReference<>(0);
+        Cue previousCue = null;
+        recording.getCueList().stream().forEachOrdered(existingCue -> {
+            if (existingCue.getNumber().equals(cue.getNumber())) {
+                syncTime.set(videoTime);
+            }
+            if (previousCue != null) {
+                Duration newVideoTime = Duration.between(cue.getTime(), previousCue.getTime());
+                long l = newVideoTime.toMillis() + syncTime.get();
+                cue.setVideoTime(l);
+            }
+        });
+        cueRepository.saveAll(recording.getCueList());
+    }
+
+
     @GetMapping("deleteCue")
     public boolean deleteCue(@RequestParam(name = "number") Double cueNumber,
                           @RequestParam(name = "recordingId", required = false) Integer recordingId)
@@ -155,6 +175,7 @@ public class LampController {
         }
         return null;
     }
+
 
 
 

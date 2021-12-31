@@ -12,6 +12,7 @@ public class Cue {
     @Id
     private Double number;
     private Instant time;
+    // In seconds
     private Long videoTime;
 
     public Cue() {
