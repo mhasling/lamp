@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import moment from 'moment'
-import ReactPlayer from "react-player";
 import CreatableSelect from 'react-select/creatable';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
@@ -8,6 +7,7 @@ import 'font-awesome/css/font-awesome.min.css';
 import Modal from 'react-modal';
 import {postJson, postFile} from './Api.js'
 import {Cue} from "./modals/Cue.js"
+import SettingsModal from "./SettingsModal.js"
 
 class App extends Component {
   state = {
@@ -17,7 +17,9 @@ class App extends Component {
     video : {},
     createCueOpen : false,
     newCue : {},
-    url: 'getVideo'
+    url: 'getVideo',
+    selectedCue : {},
+    showSyncCues : false,
   };
 
 
@@ -41,14 +43,16 @@ class App extends Component {
   }
 
   loadCues = () => {
-    fetch('/getCues?recordingId=1').then(response => response.json())
-    .then(data => {
-        if (data) {
-            this.setState({cues : data})
-        }
-    }).catch(e => {
-        this.setState({cues : []})
-    });
+      if (!!this.state.recording && !!this.state.recording.selectedRecordingId) {
+        fetch('/getCues?recordingId=' + this.state.recording.selectedRecordingId).then(response => response.json())
+        .then(data => {
+            if (data) {
+                this.setState({cues : data})
+            }
+        }).catch(e => {
+            this.setState({cues : []})
+        });
+      }
   }
 
   onChange = (e) => {
@@ -83,12 +87,20 @@ class App extends Component {
   }
 
   handleCueClick = (event, cue : Cue) => {
+//    this.setState({video : {...this.state.video, currentTime : cue.videoTime}});
     this.state.video.currentTime = cue.videoTime;
   }
 
   deleteCue = (cue) => {
     console.log(cue);
     fetch('/deleteCue?recordingId=' + this.state.recording.selectedRecordingId + "&number=" + cue.number).then(response => response.json())
+    .then(data => {
+        this.loadCues();
+    });
+  }
+
+  syncVideoTime = (cue) => {
+    fetch('/syncVideoTime?recordingId=' + this.state.recording.selectedRecordingId + "&number=" + cue.number + "&videoTime=" + this.state.video.currentTime).then(response => response.json())
     .then(data => {
         this.loadCues();
     });
@@ -108,12 +120,17 @@ class App extends Component {
      });
   }
 
+  promptVideoTime = (cue) => {
+
+  }
+
   render() {
     return (
       <div>
         <header>
           <h2>Lamp</h2>
         </header>
+        <SettingsModal showSyncCues={this.state.showSyncCues} cue={this.state.selectedCue} />
         <Modal isOpen={this.state.createCueOpen} contentLabel="Create Cue">
             <div>
                 <h2>Add Cue</h2>
@@ -136,8 +153,8 @@ class App extends Component {
                 <button type="button" onClick={() => { this.setState({createCueOpen : false}) }} >Close</button>
             </div>
         </Modal>
-        <div className="container">
-          <div className="row">
+        <div className="mainContainer">
+          <div >
             <div>
                 <CreatableSelect options={this.state.recordings}
                                 create
@@ -146,20 +163,20 @@ class App extends Component {
                                 getOptionLabel={(o) => o.name}
                                 getOptionValue={(o) => o.id}
                                 />
-              <span className="clickable" onClick={() => this.editRecording(cue)} ><i className="fa fa-solid fa-edit" ></i></span>
-              <span className="clickable" onClick={() => this.editRecording(cue)} ><i className="fa fa-solid fa-trash" ></i></span>
-          </div>
+              <span className="clickable" onClick={() => this.editRecording()} ><i className="fa fa-solid fa-edit" ></i></span>
+//              <span className="clickable" onClick={() => this.editRecording()} ><i className="fa fa-solid fa-trash" ></i></span>
+            </div>
             <div>
                 <label for="video">Choose Video File</label>
                 <input id="video" type="file" onChange={this.onChange} />
             </div>
           </div>
-          <div className="row">
-            <div className="col-lg-9">
+          <div className="container">
+            <div className="child">
                 {/*<ReactPlayer width="100%" height="100%" url={this.state.url} controls={true} /> */}
-                <video id="video-player" src={this.state.url} width="720px" height="480px" controls preload="none"/>
+                <video id="video-player" className="videoContent" width="100%" height="100%" src={this.state.url} controls preload="none"/>
             </div>
-            <div className="col-lg-2">
+            <div className="child cueContent">
               <h2>Cues
                   <span className="clickable" onClick={this.addCueClicked} ><i className="fa fa-solid fa-plus" ></i></span>
               </h2>
@@ -168,7 +185,10 @@ class App extends Component {
                   <a href="#" onClick={(e) => this.handleCueClick(e, cue)} > {cue.number} </a>
                   {/*({moment(cue.time).format('MM/DD/YYYY hh:mm:ss a')}) */}
                   {new Date(cue.videoTime * 1000).toISOString().substr(11, 8)}
-                  <span className="clickable" onClick={() => this.deleteCue(cue)} ><i className="fa fa-solid fa-trash" ></i></span>
+                    <span className="clickable" onClick={() => this.deleteCue(cue)} title="Deleted Cue" ><i className="fa fa-solid fa-trash" ></i></span>
+                    {!!cue.receivedTime &&
+                        <span className="clickable" onClick={() => this.promptVideoTime(cue)} title="Sync Future Cues" ><i className="fa fa-solid fa-clock-o" ></i></span>
+                    }
                 </div>
               )}
             </div>

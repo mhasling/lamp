@@ -1,8 +1,33 @@
-aside {
+.aside {
   width: 10%;
   float: right;
 }
 
 .clickable {
     cursor : pointer
+}
+
+.videoContent {
+    width : 60vw;
+}
+
+.container {
+    display : flex;
+    justify-content: left;
+    flex-direction : row;
+}
+
+.child {
+    margin: auto;
+    align-self : flex-start;
+}
+
+.cueContent {
+    vertical-align : top;
+    position: top;
+}
+
+.mainContainer {
+    display : flex;
+    flex-direction: column;
 }

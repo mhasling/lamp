@@ -7,8 +7,6 @@ import com.mh.lamp.recording.RecordingContentStore;
 import com.mh.lamp.recording.RecordingRepository;
 import com.mh.lamp.recording.StreamingService;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.integration.ip.udp.UnicastSendingMessageHandler;
 import org.springframework.integration.support.MessageBuilder;
 import org.springframework.web.bind.annotation.*;
@@ -18,10 +16,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 @RestController
@@ -43,10 +38,10 @@ public class LampController {
     }
 
     @GetMapping("/testMessage")
-    public void testMessage() {
+    public void testMessage(@RequestParam(name = "cueNumber", required = false) Integer cueNumber) {
         UnicastSendingMessageHandler handler =
                 new UnicastSendingMessageHandler("localhost", 9000);
-        String payload = "Cue 1 31";
+        String payload = "Cue 1 " + cueNumber;
         handler.handleMessage(MessageBuilder.withPayload(payload).build());
     }
 
@@ -103,7 +98,7 @@ public class LampController {
                 syncTime.set(videoTime);
             }
             if (previousCue != null) {
-                Duration newVideoTime = Duration.between(cue.getTime(), previousCue.getTime());
+                Duration newVideoTime = Duration.between(cue.getReceivedTime(), previousCue.getReceivedTime());
                 long l = newVideoTime.toMillis() + syncTime.get();
                 cue.setVideoTime(l);
             }
@@ -118,6 +113,27 @@ public class LampController {
     {
         Recording recording = recordingRepository.getById(recordingId != null ? recordingId : selectedRecordingId);
         recording.getCueList().removeIf(c -> c.getNumber().equals(cueNumber));
+        recordingRepository.save(recording);
+        return true;
+    }
+
+    @GetMapping("syncVideoTime")
+    public boolean syncVideoTime(@RequestParam(name = "recordingId", required = false) Integer recordingId,
+                                 @RequestParam(name = "number") Double cueNumber,
+                                 @RequestParam(name = "videoTime") Long videoTime)
+    {
+        Recording recording = recordingRepository.getById(recordingId != null ? recordingId : selectedRecordingId);
+
+        Cue syncCue = null;
+        for (Cue cue : recording.getCueList()) {
+            if (cue.getNumber() != null && cue.getNumber().equals(cueNumber)) {
+                syncCue = cue;
+            }
+            if (syncCue != null && cue.getReceivedTime() != null && syncCue.getReceivedTime() != null) {
+                Instant timeSinceSyncCue = cue.getReceivedTime().minusSeconds(syncCue.getVideoTime());
+                cue.setVideoTime(timeSinceSyncCue.getEpochSecond() + videoTime);
+            }
+        }
         recordingRepository.save(recording);
         return true;
     }
@@ -148,16 +164,17 @@ public class LampController {
     }
 
     @PostMapping("addVideo")
-    public ResponseEntity<?> addVideo(@RequestParam Integer recordingId,
+    public boolean addVideo(@RequestParam Integer recordingId,
                                    @RequestParam(name = "file") MultipartFile file) throws IOException {
         Optional<Recording> recording = recordingRepository.findById(recordingId);
         if (recording.isPresent()) {
             service.saveVideo(file);
             recording.get().setVideoTitle(file.getOriginalFilename());
             recordingRepository.save(recording.get());
-            return new ResponseEntity<Object>(HttpStatus.OK);
+//            return new ResponseEntity<Object>(HttpStatus.OK);
+            return true;
         }
-        return null;
+        return false;
     }
 
     @GetMapping("getRecordings")

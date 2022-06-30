@@ -14,7 +14,8 @@ import java.io.IOException;
 @Service
 public class StreamingService {
 
-    private static final String FORMAT = "/Users/alexandramannix/Downloads/videos2/%s";
+//    private static final String FORMAT = "/Users/alexandramannix/Downloads/videos2/%s";
+    private static final String FORMAT = "D:\\Projects\\lamp\\data\\%s";
 
     public Mono<Resource> getVideo(String title) {
         return Mono.fromSupplier(() -> new FileSystemResource(String.format(FORMAT, title)));

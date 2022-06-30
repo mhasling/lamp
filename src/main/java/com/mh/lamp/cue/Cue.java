@@ -11,7 +11,7 @@ import java.time.Instant;
 public class Cue {
     @Id
     private Double number;
-    private Instant time;
+    private Instant receivedTime;
     // In seconds
     private Long videoTime;
 
@@ -20,7 +20,7 @@ public class Cue {
 
     public Cue(Double number, Instant time) {
         this.number = number;
-        this.time = time;
+        this.receivedTime = time;
     }
 
 }
